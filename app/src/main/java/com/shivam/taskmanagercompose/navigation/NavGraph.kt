@@ -6,12 +6,12 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.shivam.taskmanagercompose.ui.screens.chatlist.ChatListScreen
+import com.shivam.taskmanagercompose.ui.screens.chatscreen.ChatScreen
+import com.shivam.taskmanagercompose.ui.screens.createlisting.CreateListingScreen
 import com.shivam.taskmanagercompose.ui.screens.home.HomeScreen
+import com.shivam.taskmanagercompose.ui.screens.listingdetails.ListingDetailsScreen
 import com.shivam.taskmanagercompose.ui.screens.profile.ProfileScreen
-import com.shivam.taskmanagercompose.ui.screens.listing.CreateListingScreen
-import com.shivam.taskmanagercompose.ui.screens.listing.ListingDetailsScreen
-import com.shivam.taskmanagercompose.ui.screens.chat.ChatListScreen
-import com.shivam.taskmanagercompose.ui.screens.chat.ChatScreen
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
@@ -117,4 +117,4 @@ fun NavGraph(navController: NavHostController) {
             )
         }
     }
-} 
+}
