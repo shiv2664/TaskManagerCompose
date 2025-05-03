@@ -4,42 +4,48 @@ import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class Converters {
     private val gson = Gson()
+    private val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 
+    // LocalDateTime
     @TypeConverter
-    fun fromTimestamp(value: String?): LocalDateTime? {
-        return value?.let { LocalDateTime.parse(it) }
+    fun fromLocalDateTime(dateTime: LocalDateTime?): String? {
+        return dateTime?.format(formatter)
     }
 
     @TypeConverter
-    fun dateToTimestamp(date: LocalDateTime?): String? {
-        return date?.toString()
+    fun toLocalDateTime(dateTimeString: String?): LocalDateTime? {
+        return dateTimeString?.let { LocalDateTime.parse(it, formatter) }
+    }
+
+    // List<String>
+    @TypeConverter
+    fun fromStringList(list: List<String>): String {
+        return gson.toJson(list)
     }
 
     @TypeConverter
-    fun fromStringList(value: String): List<String> {
+    fun toStringList(data: String): List<String> {
         val listType = object : TypeToken<List<String>>() {}.type
-        return gson.fromJson(value, listType)
+        return gson.fromJson(data, listType)
     }
 
+    // List<Long>
     @TypeConverter
-    fun toStringList(list: List<String>): String {
+    fun fromLongList(list: List<Long>): String {
         return gson.toJson(list)
     }
 
     @TypeConverter
-    fun fromLongList(value: String): List<Long> {
+    fun toLongList(data: String): List<Long> {
         val listType = object : TypeToken<List<Long>>() {}.type
-        return gson.fromJson(value, listType)
+        return gson.fromJson(data, listType)
     }
 
-    @TypeConverter
-    fun toLongList(list: List<Long>): String {
-        return gson.toJson(list)
-    }
-
+    // SkillLevel Enum
     @TypeConverter
     fun fromSkillLevel(value: SkillLevel): String {
         return value.name
@@ -50,6 +56,7 @@ class Converters {
         return SkillLevel.valueOf(value)
     }
 
+    // GamePlatform Enum
     @TypeConverter
     fun fromGamePlatform(value: GamePlatform): String {
         return value.name
@@ -59,4 +66,17 @@ class Converters {
     fun toGamePlatform(value: String): GamePlatform {
         return GamePlatform.valueOf(value)
     }
+
+
+    @TypeConverter
+    fun fromPriority(priority: TaskPriority): String {
+        return priority.name
+    }
+
+    @TypeConverter
+    fun toPriority(priority: String): TaskPriority {
+        return TaskPriority.valueOf(priority)
+    }
+
+
 } 

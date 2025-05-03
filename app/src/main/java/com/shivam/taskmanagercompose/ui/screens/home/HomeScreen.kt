@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.shivam.taskmanagercompose.data.GamePlatform
+import com.shivam.taskmanagercompose.ui.components.ListingCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -21,6 +22,7 @@ fun HomeScreen(
     onCreateListingClick: () -> Unit,
     onProfileClick: (Long) -> Unit,
     onChatListClick: () -> Unit,
+    onCreateTaskClick: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -98,7 +100,7 @@ fun HomeScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onCreateListingClick,
+                onClick = onCreateTaskClick,
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(

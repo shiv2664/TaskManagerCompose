@@ -12,6 +12,7 @@ import com.shivam.taskmanagercompose.ui.screens.createlisting.CreateListingScree
 import com.shivam.taskmanagercompose.ui.screens.home.HomeScreen
 import com.shivam.taskmanagercompose.ui.screens.listingdetails.ListingDetailsScreen
 import com.shivam.taskmanagercompose.ui.screens.profile.ProfileScreen
+import com.shivam.taskmanagercompose.ui.screens.task.TaskScreen
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
@@ -26,6 +27,11 @@ sealed class Screen(val route: String) {
     object Chat : Screen("chat/{userId}") {
         fun createRoute(userId: Long) = "chat/$userId"
     }
+
+    object Task : Screen("task/{taskId}") {
+        fun createRoute(taskId: Long = -1L) = "task/$taskId"
+    }
+
 }
 
 @Composable
@@ -47,7 +53,11 @@ fun NavGraph(navController: NavHostController) {
                 },
                 onChatListClick = {
                     navController.navigate(Screen.ChatList.route)
+                },
+                onCreateTaskClick = {
+                    navController.navigate(Screen.Task.createRoute())
                 }
+
             )
         }
 
@@ -113,6 +123,21 @@ fun NavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             ChatScreen(
                 userId = backStackEntry.arguments?.getLong("userId") ?: 0L,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.Task.route,
+            arguments = listOf(
+                navArgument("taskId") {
+                    type = NavType.LongType
+                    defaultValue = -1L
+                }
+            )
+        ) { backStackEntry ->
+            TaskScreen(
+                taskId = backStackEntry.arguments?.getLong("taskId") ?: -1L,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
