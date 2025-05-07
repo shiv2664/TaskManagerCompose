@@ -1,28 +1,22 @@
 package com.shivam.taskmanagercompose.ui.screens.task
 
-import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.shivam.taskmanagercompose.data.TaskPriority
-import com.vanpra.composematerialdialogs.MaterialDialog
-import com.vanpra.composematerialdialogs.datetime.date.datepicker
-import com.vanpra.composematerialdialogs.datetime.time.timepicker
-import com.vanpra.composematerialdialogs.rememberMaterialDialogState
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+import com.shivam.taskmanagercompose.data.Task
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material3.Checkbox
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
 fun TaskScreen(
     taskId: Long,
     onNavigateBack: () -> Unit,
@@ -30,196 +24,75 @@ fun TaskScreen(
         factory.create(taskId)
     }
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val dateDialogState = rememberMaterialDialogState()
-    val timeDialogState = rememberMaterialDialogState()
-    var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
-    var selectedTime by remember { mutableStateOf<LocalTime?>(null) }
+    val tasks by viewModel.tasks.collectAsState()
+    var newTaskTitle by remember { mutableStateOf("") }
+    var newTaskDescription by remember { mutableStateOf("") }
 
-    LaunchedEffect(uiState.navigateBack) {
-        if (uiState.navigateBack) {
-            onNavigateBack()
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (taskId == -1L) "New Task" else "Edit Task") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Navigate back"
-                        )
-                    }
-                },
-                actions = {
-                    if (taskId != -1L) {
-                        IconButton(onClick = { viewModel.toggleDeleteConfirmation() }) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete task"
-                            )
-                        }
-                    }
-                }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Add Task Section
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = newTaskTitle,
+                onValueChange = { newTaskTitle = it },
+                label = { Text("Task Title") },
+                modifier = Modifier.weight(1f)
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { viewModel.saveTask() },
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Save,
-                    contentDescription = "Save task"
-                )
+            Spacer(modifier = Modifier.width(8.dp))
+
+            OutlinedTextField(
+                value = newTaskDescription,
+                onValueChange = { newTaskDescription = it },
+                label = { Text("Task Description") },
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(onClick = {
+                if (newTaskTitle.isNotBlank() && newTaskDescription.isNotBlank()) {
+                    viewModel.addTask(Task(title = newTaskTitle, description = newTaskDescription))
+                    newTaskTitle = ""
+                    newTaskDescription = ""
+                }
+            }) {
+                Text("Add")
             }
         }
-    ) { paddingValues ->
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp)
-            ) {
-                OutlinedTextField(
-                    value = uiState.title,
-                    onValueChange = { viewModel.updateTitle(it) },
-                    label = { Text("Title") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+        Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = uiState.description,
-                    onValueChange = { viewModel.updateDescription(it) },
-                    label = { Text("Description") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3,
-                    maxLines = 5
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "Priority",
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    TaskPriority.entries.forEach { priority ->
-                        FilterChip(
-                            selected = uiState.priority == priority,
-                            onClick = { viewModel.updatePriority(priority) },
-                            label = { Text(priority.name) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedButton(
-                    onClick = { dateDialogState.show() },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.DateRange,
-                        contentDescription = null
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = uiState.dueDate?.format(
-                            DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")
-                        ) ?: "Set Due Date"
-                    )
-                }
+        // Task List
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            items(tasks) { task ->
+                TaskItem(task, viewModel)
             }
         }
     }
+}
 
-    MaterialDialog(
-        dialogState = dateDialogState,
-        buttons = {
-            positiveButton("Next") {
-                timeDialogState.show()
-            }
-            negativeButton("Cancel")
-        }
+@Composable
+fun TaskItem(task: Task, viewModel: TaskViewModel) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        datepicker { date ->
-            selectedDate = date
-        }
-    }
-
-    MaterialDialog(
-        dialogState = timeDialogState,
-        buttons = {
-            positiveButton("OK") {
-                selectedDate?.let { date ->
-                    selectedTime?.let { time ->
-                        viewModel.updateDueDate(LocalDateTime.of(date, time))
-                    }
-                }
-            }
-            negativeButton("Cancel")
-        }
-    ) {
-        timepicker { time ->
-            selectedTime = time
-        }
-    }
-
-    if (uiState.showDeleteConfirmation) {
-        AlertDialog(
-            onDismissRequest = { viewModel.toggleDeleteConfirmation() },
-            title = { Text("Delete Task") },
-            text = { Text("Are you sure you want to delete this task?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteTask()
-                        viewModel.toggleDeleteConfirmation()
-                    }
-                ) {
-                    Text("Delete")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.toggleDeleteConfirmation() }) {
-                    Text("Cancel")
-                }
-            }
+        Checkbox(
+            checked = task.isCompleted,
+            onCheckedChange = { viewModel.updateTask(task.copy(isCompleted = it)) }
         )
-    }
-
-    if (uiState.error != null) {
-        AlertDialog(
-            onDismissRequest = { viewModel.clearError() },
-            title = { Text("Error") },
-            text = { Text(uiState.error!!) },
-            confirmButton = {
-                TextButton(onClick = { viewModel.clearError() }) {
-                    Text("OK")
-                }
-            }
-        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text = task.title, style = TextStyle(fontWeight = FontWeight.Bold))
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text = task.description)
+        Spacer(modifier = Modifier.weight(1f))
+        IconButton(onClick = { viewModel.deleteTask(task) }) {
+            Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
+        }
     }
 } 

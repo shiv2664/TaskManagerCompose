@@ -1,20 +1,69 @@
 package com.shivam.taskmanagercompose.ui.screens.task
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shivam.taskmanagercompose.data.Task
 import com.shivam.taskmanagercompose.data.TaskPriority
 import com.shivam.taskmanagercompose.data.TaskRepository
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
+import javax.inject.Inject
+
+@AssistedFactory
+interface TaskViewModelFactory {
+    fun create(taskId: Long): TaskViewModel
+}
+
+@HiltViewModel(assistedFactory = TaskViewModelFactory::class)
+@HiltViewModel
+class TaskViewModel @Inject constructor(private val repository: TaskRepository) : ViewModel() {
+    private val _tasks = MutableStateFlow<List<Task>>(emptyList())
+    val tasks: StateFlow<List<Task>> = _tasks.asStateFlow()
+
+    private val _uiState = MutableStateFlow(TaskUiState())
+    val uiState: StateFlow<TaskUiState> = _uiState.asStateFlow()
+
+    init {
+        getAllTasks()
+    }
+
+    fun getAllTasks() {
+        viewModelScope.launch {
+            repository.getAllTasks().collect { tasks ->
+                _tasks.value = tasks
+            }
+        }
+    }
+
+    fun addTask(task: Task) {
+        viewModelScope.launch {
+            repository.insertTask(task)
+            getAllTasks()
+        }
+    }
+
+    fun updateTask(task: Task) {
+        viewModelScope.launch {
+            repository.updateTask(task)
+            getAllTasks()
+        }
+    }
+
+    fun deleteTask(task: Task) {
+        viewModelScope.launch {
+            repository.deleteTask(task)
+            getAllTasks()
+        }
+    }
+}
 
 data class TaskUiState(
     val id: Long = 0,
@@ -29,21 +78,11 @@ data class TaskUiState(
     val navigateBack: Boolean = false,
     val error: String? = null
 )
-
-@AssistedFactory
-interface TaskViewModelFactory {
-    fun create(taskId: Long): TaskViewModel
-}
-
 @HiltViewModel(assistedFactory = TaskViewModelFactory::class)
-class TaskViewModel @AssistedInject constructor(
-    private val repository: TaskRepository,
-    @Assisted private val taskId: Long
-) : ViewModel() {
+class TaskDetailViewModel @AssistedInject constructor(
+    private val repository: TaskRepository, @Assisted private val taskId: Long) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TaskUiState())
-    val uiState: StateFlow<TaskUiState> = _uiState.asStateFlow()
-
     init {
         if (taskId != -1L) {
             loadTask()

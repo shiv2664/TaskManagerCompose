@@ -2,9 +2,9 @@ package com.shivam.taskmanagercompose.di
 
 import android.content.Context
 import androidx.room.Room
-import com.shivam.taskmanagercompose.data.AppDatabase
+import com.shivam.taskmanagercompose.data.TaskDatabase
+import com.shivam.taskmanagercompose.data.TaskDao
 import com.shivam.taskmanagercompose.data.dao.ListingDao
-import com.shivam.taskmanagercompose.data.dao.ProfileDao
 import com.shivam.taskmanagercompose.data.repository.ListingRepository
 import com.shivam.taskmanagercompose.data.repository.RoomListingRepository
 import dagger.Module
@@ -21,27 +21,27 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideAppDatabase(
-        @ApplicationContext context: Context
-    ): AppDatabase {
+            @ApplicationContext context: Context
+    ): TaskDatabase {
         return Room.databaseBuilder(
-            context,
-            AppDatabase::class.java,
-            "buddy_finder_db"
+                context,
+                TaskDatabase::class.java,
+                "task_database"
         )
-        .fallbackToDestructiveMigration()
-        .build()
+                .fallbackToDestructiveMigration()
+                .build()
     }
 
     @Provides
     @Singleton
-    fun provideListingDao(database: AppDatabase): ListingDao {
+    fun provideTaskDao(database: TaskDatabase): TaskDao {
+        return database.taskDao()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideListingDao(database: TaskDatabase): ListingDao {
         return database.listingDao()
-    }
-
-    @Provides
-    @Singleton
-    fun provideProfileDao(database: AppDatabase): ProfileDao {
-        return database.profileDao()
     }
 
     @Provides
